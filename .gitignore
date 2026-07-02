@@ -220,5 +220,6 @@ __marimo__/
 # Redditor project-specific
 data/*.db
 data/*.csv
+data/*.json
 !data/.gitkeep
 .env

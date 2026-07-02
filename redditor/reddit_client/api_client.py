@@ -124,7 +124,7 @@ class ApiRedditClient(RedditClient):
         age_days = (datetime.now(timezone.utc).timestamp() - me.created_utc) / 86400
         return me.comment_karma, int(age_days)
 
-    def get_comment_status(self, comment_id: str) -> dict:
+    def get_comment_status(self, comment_id: str, subreddit: str | None = None, post_id: str | None = None) -> dict:
         comment = self.reddit.comment(id=comment_id)
         comment.refresh()
         removed = bool(getattr(comment, "removed", False) or getattr(comment, "banned_by", None))

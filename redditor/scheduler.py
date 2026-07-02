@@ -92,7 +92,7 @@ def check_for_removals(account: str = "default", lookback_hours: int = REMOVAL_C
 
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT id, reddit_comment_id, subreddit FROM drafts d "
+            "SELECT d.id, d.reddit_comment_id, c.subreddit, c.reddit_post_id FROM drafts d "
             "JOIN candidate_posts c ON d.candidate_post_id = c.id "
             "WHERE d.status = 'posted' AND d.posted_at >= ? AND d.reddit_comment_id IS NOT NULL",
             (cutoff,),
@@ -104,7 +104,9 @@ def check_for_removals(account: str = "default", lookback_hours: int = REMOVAL_C
     flagged = 0
     for row in rows:
         try:
-            status = reddit.get_comment_status(row["reddit_comment_id"])
+            status = reddit.get_comment_status(
+                row["reddit_comment_id"], subreddit=row["subreddit"], post_id=row["reddit_post_id"]
+            )
             if status["removed"] or status["score"] <= DOWNVOTE_SCORE_THRESHOLD:
                 flagged += 1
         except Exception:

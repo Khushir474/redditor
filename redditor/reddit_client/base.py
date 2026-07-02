@@ -56,6 +56,8 @@ class RedditClient(ABC):
         """Return (comment_karma, account_age_days) for the authenticated account."""
 
     @abstractmethod
-    def get_comment_status(self, comment_id: str) -> dict:
+    def get_comment_status(self, comment_id: str, subreddit: str | None = None, post_id: str | None = None) -> dict:
         """Return {"removed": bool, "score": int} for a comment the account posted,
-        used to detect removals/downvotes and trigger a cooldown."""
+        used to detect removals/downvotes and trigger a cooldown. subreddit/post_id
+        are optional context some transports (e.g. old.reddit.com scraping, which
+        has no bare comment-by-id URL) need to build the comment's permalink."""

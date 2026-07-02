@@ -21,9 +21,14 @@ before anything gets posted (or auto-posts, if you flip the mode switch).
   examples — this captures both voice *and* how much depth you tend to give
   for a given kind of question. Every comment actually posted gets appended
   back into the store.
-- **Reddit access**: the official API (PRAW/OAuth) is primary. A browser
-  automation fallback (`REDDIT_CLIENT_MODE=browser`) is stubbed behind the
-  same interface for when the API isn't viable — not implemented yet.
+- **Reddit access**: a browser session (Playwright, driving old.reddit.com
+  as your logged-in account) is the default/primary client — no Reddit API
+  app needed. Reddit's Responsible Builder Policy (effective 2026-06-05)
+  removed self-serve app creation at `reddit.com/prefs/apps` and gated API
+  access behind an approval process unlikely to grant a commenting/outreach
+  use case, so the official API client (`REDDIT_CLIENT_MODE=api`, PRAW)
+  is kept as an opt-in for anyone who does get approved, but isn't the
+  default.
 - **LLM**: OpenRouter primary, OpenAI fallback. **Embeddings**: Voyage AI or
   OpenAI, via `EMBEDDING_PROVIDER`.
 
@@ -32,12 +37,21 @@ before anything gets posted (or auto-posts, if you flip the mode switch).
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in Reddit API creds + LLM/embedding API keys
+playwright install chromium   # one-time, for the browser-session client
+cp .env.example .env          # fill in your Reddit login + LLM/embedding API keys
 ```
 
-Create a Reddit "script" app at https://www.reddit.com/prefs/apps to get
-`REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET`. Username/password are only
-needed if you want to post (read-only sourcing/dry-run works without them).
+Fill in `REDDIT_USERNAME`/`REDDIT_PASSWORD` in `.env` (and `REDDIT_TOTP_SECRET`
+if your account has 2FA — otherwise you'll be prompted for a code in the
+terminal on first login). The first command that touches Reddit opens a
+**visible** browser window to log in and solve any captcha; it saves the
+session to `data/reddit_session.json` so every run after that is headless
+and doesn't log in again. If that file is ever deleted or the session goes
+stale, it transparently falls back to a visible re-login.
+
+If you have approved Reddit API access instead, set `REDDIT_CLIENT_MODE=api`
+and fill in `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET` (create a "script" app
+at https://www.reddit.com/prefs/apps, if your account still has that option).
 
 ## Usage
 
@@ -71,9 +85,21 @@ pytest tests/
 All tests run against a temp SQLite db and a fake (hash-based, deterministic)
 embedding client — no network calls, no real API keys needed.
 
+## Known limitations
+
+- The browser client's `get_user_comments` (used by `sync-history`) can't
+  pull the full text of a parent comment when you were replying to a
+  comment rather than a post — old Reddit's comment-listing page only
+  links to it. Use `import-csv` for reply-to-reply examples where the
+  parent context matters.
+- `get_subreddit_rules` uses the subreddit sidebar as a stand-in for a
+  dedicated rules page, since old Reddit doesn't expose one cleanly.
+- Scraping selectors (`.thing`, `.usertext-body`, etc.) are inherently
+  fragile to Reddit UI changes — if `source`/`draft`/`run` start failing
+  with empty results, that's the first thing to check.
+
 ## Deferred (not in this lean v1)
 
-- Full browser-automation fallback implementation
 - Multi-account / proxy rotation
 - Auto-reply to replies/threads
 - Outcome-based re-weighting of the example store (basic cooldown-on-removal
