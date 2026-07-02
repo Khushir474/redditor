@@ -1,0 +1,10 @@
+name: early-stage-b2b-founders
+description: >
+  Non-technical founders at pre-seed/seed B2B SaaS startups struggling
+  with GTM, hiring their first sales hire, or picking a CRM.
+target_subreddits: [startups, SaaS, Entrepreneur]
+include_keywords: [CRM, GTM, "first sales hire", "go-to-market"]
+pain_signals: ["looking for", "anyone recommend", "struggling with", "worth it?"]
+exclude_keywords: [hiring, megathread]
+min_relevance_score: 0.6
+default_mode: human_approved

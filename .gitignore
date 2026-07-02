@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Redditor project-specific
+data/*.db
+data/*.csv
+!data/.gitkeep
+.env
